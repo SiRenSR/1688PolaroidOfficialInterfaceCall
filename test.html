@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1688 Token 转换工具</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        h1 { color: #ff6a00; margin-bottom: 25px; font-size: 26px; }
+        .section { margin-bottom: 25px; }
+        label { display: block; font-weight: 600; margin-bottom: 10px; color: #333; font-size: 15px; }
+        textarea, input[type="text"] { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 13px; font-family: 'Consolas', monospace; }
+        textarea { min-height: 120px; resize: vertical; }
+        input[type="text"] { margin-top: 5px; background: #fafafa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 1688 Token 转换工具</h1>
+        
+        <div class="section">
+            <label>📝 输入 Cookie：</label>
+            <textarea id="cookieInput" placeholder="在此粘贴从1688提取的Cookie..."></textarea>
+        </div>
+        
+        <div class="section" id="resultSection" style="display: none;">
+            <label>✅ Token 参数：</label>
+            <input type="text" id="tokenParam" readonly onclick="this.select(); document.execCommand('copy'); alert('已复制到剪贴板！');" style="cursor: pointer;">
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                使用方式：<code>index.php?url=图片链接&amp;token=上面的参数</code>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const cookieInput = document.getElementById('cookieInput');
+        const resultSection = document.getElementById('resultSection');
+        const tokenParamInput = document.getElementById('tokenParam');
+        
+        function generateToken() {
+            const cookie = cookieInput.value.trim();
+            
+            if (!cookie) {
+                resultSection.style.display = 'none';
+                return;
+            }
+            
+            tokenParamInput.value = encodeURIComponent(cookie);
+            resultSection.style.display = 'block';
+        }
+        
+        cookieInput.addEventListener('input', generateToken);
+        
+        generateToken();
+    </script>
+</body>
+</html>
