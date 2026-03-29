@@ -3,7 +3,7 @@
  * 1688 图片搜索 API - 简洁版
  * GET 请求参数:
  *   url: 图片链接
- *   token: 完整Cookie字符串（包含_m_h5_tk等必要Cookie）
+ *   token: 完整Cookie字符串（包含_m_h5_tk等必要Cookie，可选，不提供会自动获取）
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -12,6 +12,62 @@ function extractTokenFromCookies($cookieString) {
     if (preg_match('/_m_h5_tk=([^;\s]+)/', $cookieString, $matches)) {
         return $matches[1];
     }
+    return null;
+}
+
+function autoGetToken() {
+    $url = 'https://h5api.m.1688.com/h5/mtop.relationrecommend.wirelessrecommend.recommend/2.0/';
+    
+    $params = [
+        'jsv' => '2.7.4',
+        'appKey' => '12574478'
+    ];
+    
+    $fullUrl = $url . '?' . http_build_query($params);
+    
+    $headers = [
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+    ];
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $fullUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HEADER => true,
+        CURLOPT_NOBODY => false,
+        CURLOPT_HTTPHEADER => $headers
+    ]);
+    
+    $response = curl_exec($ch);
+    $cookies = [];
+    
+    if (preg_match_all('/Set-Cookie: (.*?);/i', $response, $matches)) {
+        $cookies = $matches[1];
+    }
+    
+    curl_close($ch);
+    
+    $tokenCookies = [];
+    foreach ($cookies as $cookie) {
+        if (strpos($cookie, '_m_h5_tk=') !== false) {
+            $tokenCookies['_m_h5_tk'] = explode(';', explode('_m_h5_tk=', $cookie)[1])[0];
+        } elseif (strpos($cookie, '_m_h5_tk_enc=') !== false) {
+            $tokenCookies['_m_h5_tk_enc'] = explode(';', explode('_m_h5_tk_enc=', $cookie)[1])[0];
+        }
+    }
+    
+    if (!empty($tokenCookies)) {
+        $cookieString = '';
+        foreach ($tokenCookies as $name => $value) {
+            $cookieString .= $name . '=' . $value . '; ';
+        }
+        return rtrim($cookieString, '; ');
+    }
+    
     return null;
 }
 
@@ -290,16 +346,28 @@ function getSearchResults($token, $cookieString, $imageId) {
     ];
 }
 
-if (!isset($_GET['url']) || !isset($_GET['token'])) {
+if (!isset($_GET['url'])) {
     echo json_encode([
         'success' => false,
-        'message' => '缺少必要参数: url 和 token'
+        'message' => '缺少必要参数: url'
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $imageUrl = $_GET['url'];
-$cookieString = $_GET['token'];
+$cookieString = $_GET['token'] ?? null;
+
+// 如果没有提供 token，自动获取
+if (!$cookieString) {
+    $cookieString = autoGetToken();
+    if (!$cookieString) {
+        echo json_encode([
+            'success' => false,
+            'message' => '自动获取 token 失败，请手动提供 token'
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
 
 try {
     $fullToken = extractTokenFromCookies($cookieString);
@@ -346,7 +414,8 @@ try {
             echo json_encode([
                 'success' => false,
                 'message' => '业务调用失败',
-                'ret' => $uploadResult['response']['ret']
+                'ret' => $uploadResult['response']['ret'],
+                'rawResponse' => $uploadResult['response']
             ], JSON_UNESCAPED_UNICODE);
             exit;
         }
