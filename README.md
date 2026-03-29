@@ -4,8 +4,8 @@
 
 ## 文件说明
 
-- `index.php` - API 接口文件
-- `test.html` - Cookie 转换工具页面
+- `index.php` - API 接口文件（支持自动获取 token）
+- `test.html` - Cookie 转换工具页面（备用，用于手动提供 token）
 
 ## 环境要求
 
@@ -15,31 +15,34 @@
 
 ## 使用方法
 
-### 1. 获取 Cookie
+### 方法 1（推荐）：自动获取 token
 
-从 1688 网站获取完整的 Cookie 字符串，确保包含以下必要的 Cookie：
-- `_m_h5_tk`
-- `_m_h5_tk_enc`
-- `cna`
-- `isg`
-- `cookie2`
-- `t`
-- `_tb_token_`
+直接调用 API 即可，无需手动获取 Cookie：
+```
+index.php?url=https://example.com/image.jpg
+```
 
-### 2. 转换 Cookie 为 URL 参数
+### 方法 2（手动提供 token）：
 
-打开 `test.html`，粘贴 Cookie，自动生成 URL 编码后的 token 参数。
+当自动获取 token 失败时，可以手动提供：
 
-### 3. 调用 API
+1. **获取 Cookie**：从 1688 网站获取完整的 Cookie 字符串
+2. **转换参数**：打开 `test.html`，粘贴 Cookie，自动生成 URL 编码后的 token 参数
+3. **调用 API**：
 
 使用 GET 方式请求 `index.php`，传递以下参数：
 
 | 参数 | 说明 | 必需 |
 |------|------|------|
 | url | 图片链接 | 是 |
-| token | URL 编码后的完整 Cookie 字符串 | 是 |
+| token | URL 编码后的完整 Cookie 字符串（可选，不提供会自动获取） | 否 |
 
-示例：
+示例 1（自动获取 token）：
+```
+index.php?url=https://example.com/image.jpg
+```
+
+示例 2（手动提供 token）：
 ```
 index.php?url=https://example.com/image.jpg&token=编码后的Cookie
 ```
@@ -67,8 +70,7 @@ index.php?url=https://example.com/image.jpg&token=编码后的Cookie
 
 1. 下载并压缩图片（最大 800x800，质量 70%）
 2. 调用 1688 API 上传图片获取 `imageId`
-3. 使用 `imageId` 调用搜索接口获取商品列表
-4. 返回格式化的搜索结果
+3. 返回 `imageId`
 
 ## 注意事项
 
